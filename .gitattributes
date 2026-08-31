@@ -1,0 +1,8 @@
+# Never try to diff or merge images as text. Students see a clean "Bin" marker
+# instead of a wall of mojibake, and a regenerated collage.jpg cannot produce a
+# conflict they have no way to resolve by hand.
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.gif   binary
+*.ttf   binary

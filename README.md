@@ -1,75 +1,159 @@
-## How do I use GitHub?
-![Recordit GIF](images/huh-confused.gif)
+# How do I use GitHub?
 
+![confused](images/huh-confused.gif)
 
-## Things you need to do to get started:
+Welcome to the INP GitHub intro. By the end of this page you will have made a
+real contribution to a real repository: **a photo of yourself, merged into this
+repo by you.** No one has to approve it. A bot checks your change and merges it
+for you, usually within a minute.
 
-- Create an account in github: [link](https://github.com/join) 
-- Install github (please follow the instructions for your OS): [link](https://github.com/git-guides/install-git)
-- Create a personal token [here](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) 
+Then your face shows up in the collage at the bottom of this page.
 
-### Getting & Creating Projects
+---
 
-| Command | Description |
-| ------- | ----------- |
-| `git init` | Initialize a local Git repository |
-| `git clone ssh://git@github.com/[username]/[repository-name].git` | Create a local copy of a remote repository |
+## Before you start
 
-### Basic commands
+- Create a GitHub account: [github.com/join](https://github.com/join)
+- Install git for your operating system: [installation guide](https://github.com/git-guides/install-git)
+- Create a personal access token: [how to](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+  When git asks you for a *password*, paste the token instead. Your GitHub
+  account password will not work.
 
-| Command | Description |
-| ------- | ----------- |
-| `git status` | Check status |
-| `git add [file-name.txt]` | Add a file to the staging area |
-| `git add -A` | Add all new and changed files to the staging area |
-| `git commit -m "[commit message]"` | Commit changes |
-| `git rm -r [file-name.txt]` | Remove a file (or folder) |
+## The commands you will use today
 
-For a more complete cheat sheet, check the [link](https://education.github.com/git-cheat-sheet-education.pdf)
+| Command | What it does |
+| ------- | ------------ |
+| `git clone <url>` | Download a copy of a repository onto your computer |
+| `git status` | Show which files you have changed |
+| `git add -A` | Stage all your changes, so git knows what to save |
+| `git commit -m "message"` | Save the staged changes, with a note about why |
+| `git push` | Send your saved changes up to GitHub |
+| `git pull` | Bring down changes other people made |
 
-### Let's try it out! 
-1. Fork this repository (check here for more details) [link](https://docs.github.com/en/get-started/quickstart/fork-a-repo))
+That is genuinely most of what daily git looks like. For everything else, keep
+[this cheat sheet](https://education.github.com/git-cheat-sheet-education.pdf)
+open.
 
-![fork-a-repo](images/fork_button.jpeg)
+---
 
-2. Clone your repo:
+## Add yourself to the collage
+
+### 1. Fork this repository
+
+A **fork** is your own copy of someone else's repository. You can do whatever
+you like in your fork without affecting the original.
+
+Click **Fork** at the top right of this page, then **Create fork**.
+
+![fork button](images/fork_button.jpeg)
+
+### 2. Clone your fork
+
+Cloning downloads your fork onto your laptop. On **your fork's** page (the URL
+should have *your* username in it), click the green **Code** button and copy the
+HTTPS URL.
+
+![code button](images/code-button.png)
+
+![clone url](images/https-url-clone.png)
+
+Then in a terminal:
+
 ```bash
 git clone https://github.com/YOUR-USERNAME/INP_Git_Intro.git
-```
-You can obtain the correct url for your fork like shown below
-![clone](images/https-url-clone.png)
-
-3. Get into the folder:
-```bash
 cd INP_Git_Intro
 ```
 
-4. Add a photo of you to `photos` with the filename as `Firstname_Lastname.jpeg` (please, use <span style="color:blue"> jpeg</span>.)
+### 3. Add your photo
 
-5. Check your modifications
+Put one photo of yourself into the `photos/` folder. The filename matters,
+because the bot uses it to label your photo in the collage:
+
+```
+photos/Firstname_Lastname.jpg
+```
+
+For example, `photos/Ada_Lovelace.jpg`. Rules:
+
+- **One photo**, directly inside `photos/` — not in a subfolder
+- Named `Firstname_Lastname` with a single underscore between the two names
+- Ending in `.jpg`, `.jpeg`, or `.png`
+- Smaller than 5 MB
+- Change nothing else in the repository
+
+### 4. Check what you changed
+
 ```bash
 git status
 ```
 
-6. Add your modifications
+You should see your photo listed as an untracked file. If you see other files
+listed too, the bot will not merge your change, so undo those first.
+
+### 5. Save and upload it
+
 ```bash
 git add -A
-```
-
-7. Commit your changes
-```bash
-git commit -m "[commit message]"
-```
-
-8. Push your changes
-```bash
+git commit -m "Add photo of Firstname Lastname"
 git push
 ```
 
-9. Create a pull request back to Antonio's repository. We will make a collage with the photos of the people who completed this tutorial! :)
+### 6. Open a pull request
 
-![pull_req](images/pull-request-start-review-button.png)
+A **pull request** asks a repository to take your changes. Go to your fork on
+GitHub and click **Contribute**, then **Open pull request**.
 
-10. Here is the collage from the previous year!
+> **Check the boxes at the top of the page before you submit.** The left one
+> (`base repository`) must say **`josueortc/INP_Git_Intro`**. If it says
+> anything else, click it and pick `josueortc/INP_Git_Intro` from the list. This
+> repository has relatives on GitHub, and the page sometimes guesses the wrong one.
+
+![open a pull request](images/pull-request-start-review-button.png)
+
+Click **Create pull request**.
+
+### 7. Watch it merge itself
+
+Within about a minute a bot will check your pull request. If you followed the
+rules above, it merges your photo and says so in a comment. **You are done —
+you have contributed to a shared repository.**
+
+If something was off, the bot comments explaining exactly what, and leaves your
+pull request open. Fix it on your laptop, then `git add -A`, `git commit`, and
+`git push` again. The bot rechecks every time you push. Nothing is broken and
+nothing is lost.
+
+---
+
+## If the bot did not merge your pull request
+
+It only merges pull requests that do nothing except add new photos. The usual
+reasons it declines:
+
+| Bot says | What happened | Fix |
+| -------- | ------------- | --- |
+| Not a new file | You edited or replaced an existing photo | Use a filename nobody has used yet |
+| Wrong folder | Your photo is not directly inside `photos/` | Move it to `photos/Firstname_Lastname.jpg` |
+| Bad filename | Missing the underscore, has spaces, or the wrong extension | Rename to `Firstname_Lastname.jpg` |
+| Too large | The photo is over 5 MB | Export a smaller version |
+| Other files changed | You also changed the README, workflows, or anything else | Undo those changes and push again |
+
+None of these are a problem, and asking for help is not cheating. That is what
+the workshop is for.
+
+## The collage
+
+This rebuilds itself every time a photo is merged. Refresh the page a minute
+after your pull request goes in and look for yourself.
 
 ![collage](collage.jpg)
+
+Last year's cohort:
+
+![previous collage](images/collage_previous_year.jpg)
+
+---
+
+## For instructors
+
+Setup and maintenance notes live in [INSTRUCTOR.md](INSTRUCTOR.md).

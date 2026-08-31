@@ -1,0 +1,108 @@
+name: Auto-merge photo
+
+# Lets a student merge their own photo with no instructor in the loop.
+#
+# The trigger is `pull_request_target`, not `pull_request`, for two reasons:
+#
+#  1. On `pull_request`, a pull request from a fork gets a read-only
+#     GITHUB_TOKEN no matter what `permissions:` says, so `gh pr merge` would
+#     fail with 403.
+#  2. `pull_request` runs from a fork are held by the "require approval for
+#     first-time contributors" policy, which would put an instructor right back
+#     in the loop for every single student.
+#
+# `pull_request_target` runs the workflow and scripts from THIS branch, never
+# from the pull request, which is what makes the elevated token safe. The job
+# below must keep it that way: no `actions/checkout` of the pull request head,
+# and no reading or executing anything the pull request contains. It looks only
+# at file metadata from the API. See
+# https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-photo-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-and-merge:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      # No `ref:` here on purpose. This checks out the base repository's default
+      # branch, which is trusted code, to get .github/scripts/check_photo_pr.py.
+      - name: Check out the trusted default branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Decide whether the pull request only adds photos
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Passed as environment variables rather than ${{ }} interpolation, so
+          # nothing a fork controls is ever spliced into a shell command.
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/check_photo_pr.py \
+            --repo "$REPO" \
+            --pr "$PR_NUMBER" \
+            --comment-file "$RUNNER_TEMP/comment.md"
+
+      - name: Merge the photo
+        id: merge
+        if: steps.check.outputs.verdict == 'merge'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -uo pipefail
+          # --delete-branch is deliberately omitted: the branch lives on the
+          # student's own fork, usually as their default branch.
+          if gh pr merge "$PR_NUMBER" --repo "$REPO" --squash; then
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            cat > "$RUNNER_TEMP/comment.md" <<'BODY'
+          ## Could not merge, but your photo is fine
+
+          The photo passed every check, so this is not something you did wrong.
+          GitHub refused the merge itself, which usually means the branch needs
+          updating against `master` or a repository setting is blocking it.
+
+          Click **Update branch** if GitHub offers it, or mention this to an
+          instructor and they will merge it by hand.
+          BODY
+          fi
+
+      # `--edit-last` keeps one running bot comment per pull request instead of a
+      # fresh one on every push. It fails when there is no earlier bot comment,
+      # so fall back to creating one.
+      - name: Tell the student what happened
+        if: always() && steps.check.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" --repo "$REPO" \
+              --body-file "$RUNNER_TEMP/comment.md" --edit-last \
+            || gh pr comment "$PR_NUMBER" --repo "$REPO" \
+              --body-file "$RUNNER_TEMP/comment.md"
+
+      - name: Fail the run if the merge was refused
+        if: steps.merge.outputs.merged == 'false'
+        run: |
+          echo "::error::gh pr merge was refused for a pull request that passed validation."
+          exit 1
