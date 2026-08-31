@@ -1,0 +1,75 @@
+name: Update collage
+
+# Rebuilds collage.jpg whenever the set of photos changes, so the README always
+# shows the current cohort without anyone running a script by hand.
+#
+# This cannot retrigger itself: the path filter watches photos/ only, and the
+# commit it pushes touches collage.jpg only. (Commits pushed with GITHUB_TOKEN
+# do not start new workflow runs either.)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'photos/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two photos merged seconds apart would otherwise race to push collage.jpg.
+concurrency:
+  group: update-collage
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out master
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow
+        run: pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Rebuild the collage and commit it
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # The collage is fully derived from photos/, so if another photo lands
+          # mid-run the fix is simply to rebuild against the new master rather
+          # than to rebase a binary file.
+          for attempt in 1 2 3; do
+            echo "::group::Attempt $attempt"
+            git fetch origin master
+            git reset --hard origin/master
+
+            python code/make_collage.py
+
+            # Staged, then compared: `git diff` alone ignores an untracked
+            # collage.jpg and would silently never commit the first one.
+            git add collage.jpg
+            if git diff --cached --quiet -- collage.jpg; then
+              echo "collage.jpg is already up to date."
+              exit 0
+            fi
+
+            git commit -m "Rebuild collage"
+
+            if git push origin HEAD:master; then
+              echo "Pushed the rebuilt collage."
+              exit 0
+            fi
+            echo "Push rejected, master moved. Rebuilding."
+            echo "::endgroup::"
+          done
+
+          echo "::error::Could not push the rebuilt collage after 3 attempts."
+          exit 1

@@ -1,2 +1,12 @@
-debug.log
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
 .DS_Store
+Thumbs.db
+
+# Stale Office lock files, which is how ~$GitHubIntro_2025.pptx got committed
+~$*
+.ipynb_checkpoints/
