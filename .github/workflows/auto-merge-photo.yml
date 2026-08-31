@@ -35,6 +35,8 @@ jobs:
   check-and-merge:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    outputs:
+      merged: ${{ steps.merge.outputs.merged }}
     steps:
       # No `ref:` here on purpose. This checks out the base repository's default
       # branch, which is trusted code, to get .github/scripts/check_photo_pr.py.
@@ -106,3 +108,33 @@ jobs:
         run: |
           echo "::error::gh pr merge was refused for a pull request that passed validation."
           exit 1
+
+  # The merge above is pushed with GITHUB_TOKEN, and GitHub deliberately raises
+  # no push event for that, to stop workflows triggering themselves. So
+  # update-collage.yml never sees the new photo and the collage has to be
+  # rebuilt from here instead.
+  rebuild-collage:
+    needs: check-and-merge
+    if: needs.check-and-merge.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: update-collage
+      cancel-in-progress: false
+    steps:
+      # `ref: master` is the base branch, which is trusted. What the v7 fork
+      # protection forbids is a ref resolving to the pull request's own head.
+      - name: Check out master, now including the merged photo
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow
+        run: pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Rebuild the collage and commit it
+        run: bash .github/scripts/rebuild_collage.sh
