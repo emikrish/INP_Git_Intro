@@ -64,6 +64,19 @@ git clone https://github.com/YOUR-USERNAME/INP_Git_Intro.git
 cd INP_Git_Intro
 ```
 
+**Check you cloned the right one before going further.** This is the single most
+common thing to get wrong, and it is much easier to catch now than after you
+have made your commit:
+
+```bash
+git remote -v
+```
+
+Both lines must contain **your** GitHub username. If they say `josueortc`, you
+cloned this repository rather than your fork — see
+[Permission denied when pushing](#permission-denied-when-pushing) at the bottom.
+It is a one-line fix and you will not lose any work.
+
 ### 3. Add your photo
 
 Put one photo of yourself into the `photos/` folder. The filename matters,
@@ -140,6 +153,51 @@ reasons it declines:
 
 None of these are a problem, and asking for help is not cheating. That is what
 the workshop is for.
+
+## Permission denied when pushing
+
+If `git push` fails with something like:
+
+```
+remote: Permission to josueortc/INP_Git_Intro.git denied to your-username.
+fatal: unable to access '...': The requested URL returned error: 403
+```
+
+you cloned **this** repository instead of your own fork. Nobody but the
+instructor can push here, which is the whole reason you fork first: the fork is
+yours to push to, and the pull request is how you offer it back.
+
+Your commit is safe. Point the repository at your fork and push again:
+
+```bash
+# 1. Make sure you have a fork. Click Fork at the top of this page if not.
+
+# 2. Check what you are currently pointed at.
+git remote -v
+
+# 3. Repoint it at your fork, using your own username.
+git remote set-url origin https://github.com/YOUR-USERNAME/INP_Git_Intro.git
+
+# 4. Confirm it changed, then push.
+git remote -v
+git push -u origin HEAD
+```
+
+Then continue from [step 6](#6-open-a-pull-request) and open your pull request.
+
+### A different error: authentication
+
+If instead you see `Support for password authentication was removed` or you are
+asked for a username and password over and over, the repository is fine but your
+credentials are not. Your GitHub account password will not work; you need a
+[personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+pasted in place of the password. The
+[GitHub CLI](https://cli.github.com/) handles this for you if you would rather
+not manage tokens:
+
+```bash
+gh auth login
+```
 
 ## The collage
 
