@@ -31,8 +31,22 @@ pull request. Anything else gets a comment explaining what to fix and stays
 open. That means a student cannot reach the workflows, the collage script, the
 README, or anyone else's photo.
 
-After a merge, `.github/workflows/update-collage.yml` rebuilds `collage.jpg`
-from `photos/` and commits it, so the README picture stays current.
+After a merge, `collage.jpg` is rebuilt from `photos/` and committed, so the
+README picture stays current.
+
+That rebuild is invoked from **two** places, and the reason is worth knowing
+before you change either. GitHub deliberately raises no `push` event for a push
+made with `GITHUB_TOKEN`, so that workflows cannot trigger themselves. The bot's
+merge is such a push, which means `update-collage.yml`'s `push` trigger never
+sees a photo the bot merged — the case that matters most. So
+`auto-merge-photo.yml` runs the rebuild itself in a second job, and
+`update-collage.yml` covers photos pushed by a person. Both call
+`.github/scripts/rebuild_collage.sh`, so the logic exists once, and both use the
+concurrency group `update-collage` so two photos landing seconds apart cannot
+race to push the collage.
+
+This was found by watching a real pull request merge and noticing the collage
+never changed, not by reading the workflow.
 
 ## One-time setup
 
